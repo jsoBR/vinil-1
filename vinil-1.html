@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratório de Física: Rotação</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #e0e0e0;
+            gap: 40px;
+            overflow: hidden;
+        }
+
+        .vinyl-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Linha de Referência (Centro para a Direita) */
+        .reference-line {
+            position: absolute;
+            left: 50%; /* Começa no centro */
+            width: 230px; /* Metade do diâmetro + margem */
+            height: 4px; /* Mais grossa para visualização */
+            background-color: #ff0000;
+            z-index: 0;
+            opacity: 0.8;
+            transform-origin: left center;
+        }
+
+        #turntable {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            border: 12px solid #333;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        #vinyl {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: repeating-radial-gradient(circle, #222 0%, #111 2px, #222 4px);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(0deg);
+        }
+
+        #marker {
+            position: absolute;
+            right: 20px; 
+            width: 50px;
+            height: 12px;
+            background-color: #00ff00;
+            border-radius: 4px;
+            box-shadow: 0 0 12px rgba(0,255,0,0.6);
+        }
+
+        #center-label {
+            width: 110px;
+            height: 110px;
+            background: radial-gradient(circle, #fff 30%, #eee 100%);
+            border-radius: 50%;
+            z-index: 2;
+            border: 2px solid #ccc;
+        }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 380px;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .display-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 10px;
+            border: 2px solid #eee;
+            flex: 1;
+        }
+
+        .timer-val, .laps-val {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2.2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .timer-val { color: #d9534f; }
+        .laps-val { color: #2c3e50; }
+
+        .section-title { font-size: 0.75rem; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        
+        button {
+            padding: 12px 20px;
+            margin: 6px 0;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .btn-main { background: #222; color: white; }
+        .btn-reset { background: #888; color: white; }
+        .btn-check { background: #28a745; color: white; margin-top: 15px; }
+        button:active { transform: scale(0.97); }
+
+        #results-area {
+            margin-top: 15px;
+            padding: 10px;
+            border: 2px dashed #28a745;
+            border-radius: 10px;
+            background-color: #f1fcf3;
+            display: none;
+            text-align: left;
+        }
+
+        .freq-val {
+            display: block;
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #1e7e34;
+            margin: 4px 0;
+            padding-left: 10px;
+        }
+
+        input[type=range] { width: 100%; margin: 15px 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="vinyl-container">
+        <div class="reference-line"></div>
+        <div id="turntable">
+            <div id="vinyl">
+                <div id="marker"></div>
+                <div id="center-label"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="section-title">Monitoramento de Rotação</div>
+        
+        <div class="stats-container">
+            <div class="display-box">
+                <span class="section-title">Tempo</span>
+                <span class="timer-val" id="display">0.000s</span>
+            </div>
+            <div class="display-box">
+                <span class="section-title">Voltas</span>
+                <span class="laps-val" id="lapCounter">0</span>
+            </div>
+        </div>
+
+        <button class="btn-main" id="startStopBtn">Girar / Iniciar</button>
+        <button class="btn-reset" id="resetBtn">Resetar Tudo</button>
+        
+        <label class="section-title" style="display:block; margin-top:15px;">Velocidade do Motor</label>
+        <input type="range" id="speedRange" min="10" max="100" value="33">
+        
+        <button class="btn-check" id="checkBtn">Conferir Valores</button>
+        
+        <div id="results-area">
+            <span class="freq-val" id="res-rpm">Frequência (f): 0 RPM</span>
+            <span class="freq-val" id="res-hz">Frequência (f): 0 Hz</span>
+            <span class="freq-val" id="res-period" style="color: #0056b3;">Período (T): 0.000s</span>
+        </div>
+    </div>
+
+    <script>
+        const vinyl = document.getElementById('vinyl');
+        const speedRange = document.getElementById('speedRange');
+        const resultsArea = document.getElementById('results-area');
+        const resRpm = document.getElementById('res-rpm');
+        const resHz = document.getElementById('res-hz');
+        const resPeriod = document.getElementById('res-period');
+        const display = document.getElementById('display');
+        const lapDisplay = document.getElementById('lapCounter');
+        const startStopBtn = document.getElementById('startStopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let rotation = 0;
+        let lastTime = performance.now();
+        let rpm = 33;
+        let isRunning = false;
+        let animationId;
+        let startTime;
+        let elapsedTime = 0;
+        let timerInterval;
+
+        function animate(currentTime) {
+            if (!isRunning) return;
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            rotation += (360 * (rpm / 60)) * deltaTime;
+            vinyl.style.transform = `rotate(${rotation}deg)`;
+            
+            const laps = Math.floor(rotation / 360);
+            lapDisplay.textContent = laps;
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function updateTimer() {
+            const now = Date.now();
+            elapsedTime = now - startTime;
+            display.textContent = (elapsedTime / 1000).toFixed(3) + "s";
+        }
+
+        startStopBtn.addEventListener('click', function() {
+            isRunning = !isRunning;
+            if (isRunning) {
+                this.textContent = "Pausar";
+                this.style.background = "#d9534f";
+                lastTime = performance.now();
+                animate(performance.now());
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateTimer, 10);
+            } else {
+                this.textContent = "Girar / Iniciar";
+                this.style.background = "#222";
+                cancelAnimationFrame(animationId);
+                clearInterval(timerInterval);
+            }
+        });
+
+        resetBtn.addEventListener('click', function() {
+            isRunning = false;
+            cancelAnimationFrame(animationId);
+            rotation = 0;
+            vinyl.style.transform = `rotate(0deg)`;
+            lapDisplay.textContent = "0";
+            clearInterval(timerInterval);
+            elapsedTime = 0;
+            display.textContent = "0.000s";
+            startStopBtn.textContent = "Girar / Iniciar";
+            startStopBtn.style.background = "#222";
+            resultsArea.style.display = 'none';
+        });
+
+        speedRange.addEventListener('input', (e) => {
+            rpm = e.target.value;
+            resultsArea.style.display = 'none';
+        });
+
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            const hz = (rpm / 60);
+            const period = (1 / hz).toFixed(3);
+            
+            resRpm.textContent = `Frequência (f): ${rpm} RPM`;
+            resHz.textContent = `Frequência (f): ${hz.toFixed(3)} Hz`;
+            resPeriod.textContent = `Período (T): ${period}s`;
+            resultsArea.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
